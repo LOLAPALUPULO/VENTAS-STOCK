@@ -1457,7 +1457,10 @@
                                   <div className="mt-4 flex flex-col space-y-2">
                                       <button onClick={() => onShowReport(feria)} className="w-full py-2 px-4 bg-primary text-white rounded-lg font-bold hover:bg-emerald-600 transition-colors">Ver Reporte</button>
                                       <button onClick={() => { audioService.playClick(); onActivateFeria(feria); }} disabled={activeFeriaConfig && activeFeriaConfig.nombreFeria === feria.config.nombreFeria} className={`w-full py-2 px-4 rounded-lg font-bold transition-colors ${activeFeriaConfig && activeFeriaConfig.nombreFeria === feria.config.nombreFeria ? 'bg-gray-400 text-gray-700 cursor-not-allowed' : 'bg-secondary text-white hover:bg-amber-600'}`}>Activar</button>
-                                      <button onClick={() => { audioService.playClick(); onDeleteFeria(feria.id); }} className="w-full py-2 px-4 bg-accent text-white rounded-lg font-bold hover:bg-red-600 transition-colors">Eliminar</button>
+                                      <button onClick={() => { audioService.playClick(); onDeleteFeria(feria.id); }} className="w-full py-2 px-4 bg-accent text-white rounded-lg font-bold hover:bg-red-600 transition-colors flex items-center justify-center gap-2">
+                                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                          Eliminar
+                                      </button>
                                   </div>
                               </div>
                           ))}
