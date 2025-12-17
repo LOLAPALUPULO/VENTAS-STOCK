@@ -1127,7 +1127,7 @@
                 <div className="animate-slide-up">
                     {view === 'config' && <FeriaConfigForm activeFeriaConfig={activeFeriaConfig} onSave={onUpdateFeriaConfig} onFinalizeFeria={onFinalizeFeria} />}
                     {view === 'report' && <SalesReport activeFeriaConfig={activeFeriaConfig} activeSales={activeSales} onFinalizeFeria={onFinalizeFeria} goToConfig={() => setViewWithSound('config')} />}
-                    {view === 'history' && <FeriaHistoryList activeFeriaConfig={activeFeriaConfig} feriaHistory={feriaHistory} onActivateFeria={onActivateHistoricalFeria} onShowReport={(f) => { audioService.playClick(); setSelectedHistoricalFeria(f); setShowHistoricalReportModal(true); }} onDeleteFeria={(id) => { audioService.playClick(); if(window.confirm('¿Estás seguro de que quieres eliminar esta feria?')) onDeleteHistoricalFeria(id); }} />}
+                    {view === 'history' && <FeriaHistoryList activeFeriaConfig={activeFeriaConfig} feriaHistory={feriaHistory} onActivateFeria={onActivateHistoricalFeria} onShowReport={(f) => { audioService.playClick(); setSelectedHistoricalFeria(f); setShowHistoricalReportModal(true); }} onDeleteFeria={onDeleteHistoricalFeria} />}
                 </div>
               </main>
               
@@ -1435,9 +1435,39 @@
       };
 
       const FeriaHistoryList = ({ activeFeriaConfig, feriaHistory, onActivateFeria, onShowReport, onDeleteFeria }) => {
+          const [loadingFeriaId, setLoadingFeriaId] = React.useState(null);
+          const [feedback, setFeedback] = React.useState({ msg: null, isError: false });
+
+          const handleDelete = async (feriaId) => {
+              audioService.playClick();
+              if (window.confirm('¿Estás seguro de que quieres eliminar esta feria? Esta acción no se puede deshacer.')) {
+                  setLoadingFeriaId(feriaId);
+                  setFeedback({ msg: null, isError: false }); // Clear previous feedback
+                  try {
+                      await onDeleteFeria(feriaId);
+                      setFeedback({ msg: 'Feria eliminada correctamente.', isError: false });
+                      audioService.playSuccess();
+                  } catch (e) {
+                      console.error("Error al eliminar feria:", e);
+                      setFeedback({ msg: `Error al eliminar la feria: ${e.message || 'Inténtalo de nuevo.'}`, isError: true });
+                      audioService.playError();
+                  } finally {
+                      setLoadingFeriaId(null);
+                      setTimeout(() => setFeedback({ msg: null, isError: false }), 3000); // Clear feedback after 3 seconds
+                  }
+              }
+          };
+
           return (
               <div className="glass shadow-xl rounded-2xl p-8 border border-white/20 space-y-6">
                   <h3 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white flex items-center gap-2"><span className="w-2 h-8 bg-primary rounded-full"></span>Historial de Ferias</h3>
+                  
+                  {feedback.msg && (
+                      <div className={`p-4 mb-4 rounded-xl font-bold animate-fade-in ${feedback.isError ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-200'}`}>
+                          {feedback.msg}
+                      </div>
+                  )}
+
                   {feriaHistory.length === 0 ? (
                       <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 p-4 rounded-xl flex items-center gap-3 animate-fade-in">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -1457,9 +1487,23 @@
                                   <div className="mt-4 flex flex-col space-y-2">
                                       <button onClick={() => onShowReport(feria)} className="w-full py-2 px-4 bg-primary text-white rounded-lg font-bold hover:bg-emerald-600 transition-colors">Ver Reporte</button>
                                       <button onClick={() => { audioService.playClick(); onActivateFeria(feria); }} disabled={activeFeriaConfig && activeFeriaConfig.nombreFeria === feria.config.nombreFeria} className={`w-full py-2 px-4 rounded-lg font-bold transition-colors ${activeFeriaConfig && activeFeriaConfig.nombreFeria === feria.config.nombreFeria ? 'bg-gray-400 text-gray-700 cursor-not-allowed' : 'bg-secondary text-white hover:bg-amber-600'}`}>Activar</button>
-                                      <button onClick={() => { audioService.playClick(); onDeleteFeria(feria.id); }} className="w-full py-2 px-4 bg-accent text-white rounded-lg font-bold hover:bg-red-600 transition-colors flex items-center justify-center gap-2">
-                                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                          Eliminar
+                                      <button 
+                                        onClick={() => handleDelete(feria.id)} 
+                                        disabled={loadingFeriaId === feria.id}
+                                        className={`w-full py-2 px-4 rounded-lg font-bold transition-colors flex items-center justify-center gap-2 
+                                          ${loadingFeriaId === feria.id ? 'bg-gray-400 text-gray-700 cursor-not-allowed' : 'bg-accent text-white hover:bg-red-600'}`}
+                                      >
+                                          {loadingFeriaId === feria.id ? (
+                                            <React.Fragment>
+                                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                              Eliminando...
+                                            </React.Fragment>
+                                          ) : (
+                                            <React.Fragment>
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                              Eliminar
+                                            </React.Fragment>
+                                          )}
                                       </button>
                                   </div>
                               </div>
