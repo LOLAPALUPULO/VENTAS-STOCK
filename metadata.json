@@ -1,7 +1,5 @@
 {
-  "name": "18 VENTAS+STOCK FINAL",
+  "name": "Copy of 18 VENTAS+STOCK FINAL",
   "description": "An intuitive React-based Point of Sale (POS) and administration application for managing fair sales, tracking stock, and generating reports.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
+  "requestFramePermissions": []
 }
